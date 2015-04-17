@@ -1,0 +1,22 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Customize your theme here. -->
+
+        <!-- colorPrimary is used for the default action bar background -->
+        <item name="colorPrimary">@color/primary_color</item>
+
+        <!-- colorPrimaryDark is used for the status bar -->
+        <item name="colorPrimaryDark">@color/dark_primary_color</item>
+
+        <!-- colorAccent is used as the default value for colorControlActivated,
+             which is used to tint widgets -->
+        <item name="colorAccent">@color/accent_color</item>
+        <item name="android:actionBarStyle">@style/AppTheme.ActionBarTheme</item>
+    </style>
+    
+    <style name="AppTheme.ActionBarTheme" parent="AppTheme.ActionBarTheme">
+        <item name="drawerArrowStyle">@drawable/ic_menu_white_24dp</item>
+    </style>
+</resources>

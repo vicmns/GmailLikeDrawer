@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="dark_primary_color">#303F9F</color>
+    <color name="primary_color">#3F51B5</color>
+    <color name="light_primary_color">#C5CAE9</color>
+    <color name="accent_color">#FFC107</color>
+
+    <color name="background_light">#ffffffff</color>s
+    <color name="menu_selected_item_color">#BDBDBD</color>
+</resources>

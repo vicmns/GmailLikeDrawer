@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="expanded_drawer_spinner_array">
+        <item>Wow</item>
+        <item>Much android</item>
+        <item>Such Gmail</item>
+        <item>Much copycat</item>
+    </array>
+</resources>
