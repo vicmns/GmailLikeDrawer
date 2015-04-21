@@ -6,10 +6,11 @@
 
     <LinearLayout
         android:id="@+id/peekMenuLayout"
-        android:layout_width="65dp"
+        android:layout_width="@dimen/condensed_navigation_drawer_width"
         android:layout_height="match_parent"
         android:background="@color/background_material_light"
         android:orientation="vertical"
+        android:gravity="center_horizontal"
         tools:context=".NavigationDrawerFragment" />
 
     <ListView

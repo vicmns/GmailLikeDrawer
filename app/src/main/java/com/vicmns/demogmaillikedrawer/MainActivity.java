@@ -15,6 +15,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.vicmns.demogmaillikedrawer.lib.CrossFadeSlidingPanelLayout;
+
 
 public class MainActivity extends ActionBarActivity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks {
@@ -49,7 +51,7 @@ public class MainActivity extends ActionBarActivity
         } else {
             mNavigationDrawerFragment.setUpForTablets(
                     R.id.navigation_drawer,
-                    (SlidingPaneLayout) parentView);
+                    (CrossFadeSlidingPanelLayout) parentView);
         }
     }
 

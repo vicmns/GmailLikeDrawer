@@ -7,24 +7,26 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 
+import com.vicmns.demogmaillikedrawer.model.DrawerItemModel;
+
 import java.util.List;
 
 /**
  * Created by vicmns on 2/13/2015.
  */
 public class CondensedDrawerListAdapter extends BaseAdapter {
-    private List<DrawerListItemModel> mDrawerListItemModels;
+    private List<DrawerItemModel> mDrawerItemModels;
     LayoutInflater mInflater;
 
-    public CondensedDrawerListAdapter(Context context, List<DrawerListItemModel> drawerListItemModels) {
-        mDrawerListItemModels = drawerListItemModels;
+    public CondensedDrawerListAdapter(Context context, List<DrawerItemModel> drawerItemModels) {
+        mDrawerItemModels = drawerItemModels;
         mInflater = (LayoutInflater) context
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
 
     @Override
     public int getCount() {
-        return mDrawerListItemModels.size();
+        return mDrawerItemModels.size();
     }
 
     @Override
@@ -48,6 +50,6 @@ public class CondensedDrawerListAdapter extends BaseAdapter {
 
     private void setViewsValues(View rowView, int position) {
         ImageView imageView = (ImageView) rowView.findViewById(R.id.drawer_list_item_section_image);
-        imageView.setImageResource(mDrawerListItemModels.get(position).getItemImageResId());
+        imageView.setImageResource(mDrawerItemModels.get(position).getItemImageResId());
     }
 }

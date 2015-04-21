@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="@dimen/condensed_navigation_drawer_item_width"
+    android:layout_height="@dimen/condensed_navigation_drawer_item_height"
+    android:layout_marginBottom="5dp"
+    android:layout_marginTop="30dp">
+
+    <ImageView
+        android:id="@+id/drawer_list_header_section_image"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_gravity="center"
+        android:src="@drawable/profile_default" />
+
+</FrameLayout>

@@ -1,7 +1,6 @@
 package com.vicmns.demogmaillikedrawer.lib;
 
 import android.content.Context;
-import android.graphics.Canvas;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.v4.view.MotionEventCompat;
@@ -21,35 +20,38 @@ public class CrossFadeSlidingPanelLayout extends SlidingPaneLayout {
     private boolean mIsPaneOpen;
     private float mPreviousSlideOffset = 0;
     private boolean mUserStillTouching;
+    private CrossFadeSlidingPanelListener mSliderListener;
 
     private SimplePanelSlideListener crossFadeListener
             = new SimplePanelSlideListener() {
         @Override
         public void onPanelSlide(View panel, float slideOffset) {
             super.onPanelSlide(panel, slideOffset);
+            boolean isPanelOpening = false;
+
             if (mPeekView == null || mFullView == null) {
                 return;
             }
 
             if(slideOffset - mPreviousSlideOffset > 0) {
-                mFullView.setVisibility(VISIBLE);
                 //Opening drawer
-                //mPeekView.setVisibility(GONE);
-                /*mPeekView.setAlpha(0);
-                mFullView.setAlpha(1);*/
+                mFullView.setVisibility(VISIBLE);
+                mPeekView.setVisibility(GONE);
+                mPeekView.setAlpha(0);
+                mFullView.setAlpha(1);
+                isPanelOpening = true;
             } else if(slideOffset == 0 && !mUserStillTouching) {
+                //Closing drawer
                 mFullView.setVisibility(GONE);
-                /*mPeekView.setVisibility(VISIBLE);
+                mPeekView.setVisibility(VISIBLE);
                 mPeekView.setAlpha(1);
-                mFullView.setAlpha(0);*/
+                mFullView.setAlpha(0);
+                isPanelOpening = false;
             }
 
-            Log.d(TAG, "Sliding value: " + slideOffset);
-
-            mPeekView.setVisibility(isOpen() ? GONE: VISIBLE);
-            mPeekView.setAlpha(1 - slideOffset);
-            mFullView.setAlpha(slideOffset);
-
+            if(mSliderListener != null) {
+                mSliderListener.onPanelSlide(panel, slideOffset, isPanelOpening);
+            }
             mPreviousSlideOffset = slideOffset;
         }
     };
@@ -64,6 +66,10 @@ public class CrossFadeSlidingPanelLayout extends SlidingPaneLayout {
 
     public CrossFadeSlidingPanelLayout(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+    }
+
+    public void setSliderListener(CrossFadeSlidingPanelListener listener) {
+        mSliderListener = listener;
     }
 
     @Override
@@ -120,7 +126,7 @@ public class CrossFadeSlidingPanelLayout extends SlidingPaneLayout {
             super.onRestoreInstanceState(state);
         }
 
-        SavedState ss = (SavedState)state;
+        SavedState ss = (SavedState) state;
         super.onRestoreInstanceState(ss.getSuperState());
         this.mIsPaneOpen = ss.isPaneOpen;
         refreshPanelVisibility();
@@ -203,5 +209,9 @@ public class CrossFadeSlidingPanelLayout extends SlidingPaneLayout {
         }
 
         return super.onTouchEvent(ev);
+    }
+
+    public interface CrossFadeSlidingPanelListener {
+        void onPanelSlide(View panel, float slideOffset, boolean isOpening);
     }
 }

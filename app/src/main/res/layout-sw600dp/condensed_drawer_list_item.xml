@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="45dp"
-    android:layout_height="45dp"
+    android:layout_width="@dimen/condensed_navigation_drawer_item_width"
+    android:layout_height="@dimen/condensed_navigation_drawer_item_height"
     android:layout_gravity="center"
-    android:layout_margin="10dp"
     android:clickable="true"
     android:foreground="?listChoiceBackgroundIndicator">
 
     <ImageView
         android:id="@+id/drawer_list_item_section_image"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
         android:layout_gravity="center"
         android:clickable="false"
         android:src="@drawable/ic_home" />

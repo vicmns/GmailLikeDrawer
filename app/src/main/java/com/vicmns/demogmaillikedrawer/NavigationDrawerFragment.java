@@ -3,6 +3,7 @@ package com.vicmns.demogmaillikedrawer;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -10,17 +11,20 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
-import android.support.v4.widget.SlidingPaneLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -28,6 +32,8 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.vicmns.demogmaillikedrawer.lib.ActionBarSlidingPanelToggle;
+import com.vicmns.demogmaillikedrawer.lib.CrossFadeSlidingPanelLayout;
+import com.vicmns.demogmaillikedrawer.model.DrawerItemModel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +44,7 @@ import java.util.List;
  * design guidelines</a> for a complete explanation of the behaviors implemented here.
  */
 public class NavigationDrawerFragment extends Fragment {
-
+    private static final String TAG = "NavigationDrawer";
     /**
      * Remember the position of the selected item.
      */
@@ -64,12 +70,23 @@ public class NavigationDrawerFragment extends Fragment {
     private ListView mDrawerListView;
     private LinearLayout mPeekDrawerLayout;
     private View mFragmentContainerView;
+    private ExpandedDrawerListAdapter mAdapter;
 
     private int mCurrentSelectedPosition = 1;
     private boolean mFromSavedInstanceState;
     private boolean mUserLearnedDrawer;
 
-    private List<DrawerListItemModel> mDrawerListItemModels;
+    private List<DrawerItemModel> mDrawerItemModels;
+    private List<View> alphaAnimationViews;
+
+    private View headerLayout;
+    private View headerImageView;
+    private View headerSpinner;
+    private int headerImageViewOriginalBottomMargin;
+    private int headerImageViewSize;
+    private int smallHeaderImageViewSize = 36;
+    private int headerOriginalHeight;
+    private int currentHeaderHeight;
 
     private View.OnClickListener peekDrawerViewItemClick = new View.OnClickListener() {
         @Override
@@ -78,6 +95,92 @@ public class NavigationDrawerFragment extends Fragment {
             selectItem(viewIndex + 1);
         }
     };
+
+
+    private CrossFadeSlidingPanelLayout.CrossFadeSlidingPanelListener mSlidingListener = new CrossFadeSlidingPanelLayout.CrossFadeSlidingPanelListener() {
+        @Override
+        public void onPanelSlide(View panel, float slideOffset, boolean isOpening) {
+            if(slideOffset >= 0.25 ) {
+                float cAlphaValue = (slideOffset - 0.25f) + (slideOffset / 4);
+                setAlphaForViews(cAlphaValue);
+
+                float newHeaderImageSize = smallHeaderImageViewSize + (cAlphaValue * 30);
+                float newHeaderMargin = 10 + (cAlphaValue * 35);
+
+                newHeaderImageSize = (newHeaderImageSize > headerImageViewSize) ?
+                        headerImageViewSize : newHeaderImageSize;
+
+                setHeaderImageViewSize((int) getPxFromDp(newHeaderImageSize));
+                //setHeaderImageViewMargins((int) getPxFromDp(newHeaderMargin));
+            }
+            else {
+                setAlphaForViews(0);
+                setHeaderImageViewSize((int) getPxFromDp(smallHeaderImageViewSize));
+                //setHeaderImageViewMargins((int) getPxFromDp(10));
+            }
+
+            currentHeaderHeight = (int) (getPxFromDp(headerOriginalHeight) * (slideOffset + 0.5f));
+            if(currentHeaderHeight > getPxFromDp(headerOriginalHeight)) {
+                currentHeaderHeight = (int) getPxFromDp(headerOriginalHeight);
+                headerSpinner.setVisibility(View.VISIBLE);
+            } else {
+                headerSpinner.setVisibility(View.GONE);
+            }
+
+
+            if(currentHeaderHeight < (int) getPxFromDp(84)) currentHeaderHeight = (int) getPxFromDp(84);
+
+            AbsListView.LayoutParams layoutParams = (AbsListView.LayoutParams) headerLayout.getLayoutParams();
+            layoutParams.height = currentHeaderHeight;
+            headerLayout.requestLayout();
+
+            if(isOpening) {
+            } else {
+
+            }
+        }
+    };
+
+    private void setAlphaForViews(float value) {
+        for(View cView: alphaAnimationViews) {
+            if(cView == null) continue;
+
+            cView.setAlpha(value);
+        }
+        headerSpinner.setAlpha(value);
+    }
+
+    private void setHeaderImageViewSize(int size) {
+        ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) headerImageView.getLayoutParams();
+        layoutParams.width = size;
+        layoutParams.height = size;
+        headerImageView.requestLayout();
+    }
+
+    private void setHeaderImageViewMargins(int margin){
+        ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) headerImageView.getLayoutParams();
+        layoutParams.bottomMargin = margin;
+        headerImageView.requestLayout();
+
+    }
+
+    private float getPxFromDp(float dp) {
+        Resources r = getResources();
+        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, r.getDisplayMetrics());
+    }
+
+    private void getListViewVisibleItems() {
+        alphaAnimationViews = new ArrayList<>();
+        int visibleChildCount = (mDrawerListView.getLastVisiblePosition() - mDrawerListView.getFirstVisiblePosition()) + 1;
+        for(int i = mDrawerListView.getFirstVisiblePosition(); i < mDrawerListView.getLastVisiblePosition(); i++) {
+            if(mAdapter.getItem(i).getItemType()
+                    != DrawerItemModel.ItemType.MAIN_ITEM) {
+                alphaAnimationViews.add(mDrawerListView.getChildAt(i + 1));
+            } else {
+                alphaAnimationViews.add(mDrawerListView.getChildAt(i + 1).findViewById(R.id.drawer_list_item_section_text));
+            }
+        }
+    }
 
     public NavigationDrawerFragment() {
     }
@@ -110,11 +213,21 @@ public class NavigationDrawerFragment extends Fragment {
         View parentView = inflater.inflate(
                 R.layout.fragment_navigation_drawer, container, false);
 
-        mDrawerListItemModels = new ArrayList<>(4);
-        mDrawerListItemModels.add(new DrawerListItemModel(R.drawable.ic_home, "Home"));
-        mDrawerListItemModels.add(new DrawerListItemModel(R.drawable.ic_explore, "What's near"));
-        mDrawerListItemModels.add(new DrawerListItemModel(R.drawable.ic_shopping_cart, "My cart"));
-        mDrawerListItemModels.add(new DrawerListItemModel(R.drawable.ic_store, "The candy shop"));
+        mDrawerItemModels = new ArrayList<>(4);
+        mDrawerItemModels.add(new DrawerItemModel(R.drawable.ic_home, "Home", DrawerItemModel.ItemType.MAIN_ITEM));
+        mDrawerItemModels.add(new DrawerItemModel(R.drawable.ic_explore, "What's near", DrawerItemModel.ItemType.MAIN_ITEM) );
+        mDrawerItemModels.add(new DrawerItemModel(R.drawable.ic_shopping_cart, "My cart",DrawerItemModel.ItemType.MAIN_ITEM));
+        mDrawerItemModels.add(new DrawerItemModel(R.drawable.ic_store, "The candy shop", DrawerItemModel.ItemType.MAIN_ITEM));
+
+        mDrawerItemModels.add(new DrawerItemModel(-1, "", DrawerItemModel.ItemType.SIMPLE_SEPARATOR));
+        mDrawerItemModels.add(new DrawerItemModel(R.drawable.ic_label, "Extra Item 1", DrawerItemModel.ItemType.SECONDARY_ITEM));
+        mDrawerItemModels.add(new DrawerItemModel(R.drawable.ic_label, "Extra Item 2", DrawerItemModel.ItemType.SECONDARY_ITEM));
+        mDrawerItemModels.add(new DrawerItemModel(R.drawable.ic_label, "Extra Item 3", DrawerItemModel.ItemType.SECONDARY_ITEM));
+        mDrawerItemModels.add(new DrawerItemModel(R.drawable.ic_label, "Extra Item 4", DrawerItemModel.ItemType.SECONDARY_ITEM));
+        mDrawerItemModels.add(new DrawerItemModel(R.drawable.ic_label, "Extra Item 5", DrawerItemModel.ItemType.SECONDARY_ITEM));
+        mDrawerItemModels.add(new DrawerItemModel(R.drawable.ic_label, "Extra Item 6", DrawerItemModel.ItemType.SECONDARY_ITEM));
+        mDrawerItemModels.add(new DrawerItemModel(R.drawable.ic_label, "Extra Item 7", DrawerItemModel.ItemType.SECONDARY_ITEM));
+        mDrawerItemModels.add(new DrawerItemModel(R.drawable.ic_label, "Extra Item 8", DrawerItemModel.ItemType.SECONDARY_ITEM));
 
         if(parentView instanceof ListView) {
             mDrawerListView = (ListView) parentView;
@@ -146,15 +259,32 @@ public class NavigationDrawerFragment extends Fragment {
             }
         });
 
-        ExpandedDrawerListAdapter adapter = new ExpandedDrawerListAdapter(getActivity(), mDrawerListItemModels);
+        mAdapter = new ExpandedDrawerListAdapter(getActivity(), mDrawerItemModels);
 
-        mDrawerListView.setAdapter(adapter);
+        mDrawerListView.setAdapter(mAdapter);
         mDrawerListView.setItemChecked(mCurrentSelectedPosition, true);
 
         LayoutInflater inflater = LayoutInflater.from(getActivity());
-        View headerView = inflater.inflate(R.layout.expanded_drawer_header_item, mDrawerListView, false);
-        addProfilePicture((ImageView) headerView.findViewById(R.id.drawer_profile_picture));
-        mDrawerListView.addHeaderView(headerView);
+        headerLayout = inflater.inflate(R.layout.expanded_drawer_header_item, mDrawerListView, false);
+        headerImageView = headerLayout.findViewById(R.id.drawer_profile_picture);
+        headerSpinner = headerLayout.findViewById(R.id.bottom_header_view);
+
+        ViewTreeObserver vto = headerLayout.getViewTreeObserver();
+        vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                headerLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                headerOriginalHeight = headerLayout.getMeasuredHeight();
+            }
+        });
+
+        ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) headerImageView.getLayoutParams();
+        headerImageViewSize = layoutParams.width;
+        headerImageViewOriginalBottomMargin = layoutParams.bottomMargin;
+
+        addProfilePicture((ImageView) headerImageView);
+        headerSpinner.setVisibility(View.GONE);
+        mDrawerListView.addHeaderView(headerLayout);
     }
 
     private void initPeekDrawer() {
@@ -163,11 +293,14 @@ public class NavigationDrawerFragment extends Fragment {
         addProfilePicture((ImageView) headerView.findViewById(R.id.drawer_list_header_section_image));
         mPeekDrawerLayout.addView(headerView);
         View cViewToAdd;
-        for(int i = 0; i < mDrawerListItemModels.size(); i++) {
+        for(int i = 0; i < mDrawerItemModels.size(); i++) {
+            if(mDrawerItemModels.get(i).getItemType() != DrawerItemModel.ItemType.MAIN_ITEM)
+                continue;
+
             cViewToAdd = inflater.inflate(R.layout.condensed_drawer_list_item, mPeekDrawerLayout, false);
             cViewToAdd.setTag(i);
             ImageView imageView = (ImageView) cViewToAdd.findViewById(R.id.drawer_list_item_section_image);
-            imageView.setImageResource(mDrawerListItemModels.get(i).getItemImageResId());
+            imageView.setImageResource(mDrawerItemModels.get(i).getItemImageResId());
             cViewToAdd.setOnClickListener(peekDrawerViewItemClick);
             mPeekDrawerLayout.addView(cViewToAdd);
         }
@@ -256,11 +389,11 @@ public class NavigationDrawerFragment extends Fragment {
         mDrawerLayout.setDrawerListener(mDrawerToggle);
     }
 
-    public void setUpForTablets(int fragmentId, SlidingPaneLayout drawerLayout) {
-        drawerLayout.setShadowResourceLeft(R.drawable.drawer_shadow_right);
-        drawerLayout.setShadowResourceRight(R.drawable.drawer_shadow_right);
+    public void setUpForTablets(int fragmentId, CrossFadeSlidingPanelLayout crossFadeSlidingPanelLayout) {
+        crossFadeSlidingPanelLayout.setShadowResourceLeft(R.drawable.drawer_shadow_right);
+        crossFadeSlidingPanelLayout.setShadowResourceRight(R.drawable.drawer_shadow_right);
         mFragmentContainerView = getActivity().findViewById(fragmentId);
-        drawerLayout.setSliderFadeColor(Color.TRANSPARENT);
+        crossFadeSlidingPanelLayout.setSliderFadeColor(Color.TRANSPARENT);
 
         ActionBar actionBar = getActionBar();
         actionBar.setDisplayHomeAsUpEnabled(true);
@@ -279,9 +412,23 @@ public class NavigationDrawerFragment extends Fragment {
             }
         };
 
-        ((ActionBarSlidingPanelToggle) mDrawerToggle).setDrawerLayout(drawerLayout);
+        ((ActionBarSlidingPanelToggle) mDrawerToggle).setDrawerLayout(crossFadeSlidingPanelLayout);
 
-        mDrawerToggle.syncState();
+        mDrawerToggle.syncState();//TODO: inject CrossFadeSliding panel to adapter
+        crossFadeSlidingPanelLayout.setSliderListener(mSlidingListener);
+        getListViewVisibleItems();
+        mDrawerListView.setOnScrollListener(new AbsListView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
+
+            }
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+                getListViewVisibleItems();
+            }
+        });
+        //mAdapter.setCrossFadeSlidingListener(crossFadeSlidingPanelLayout);
     }
 
     private void selectItem(int position) {
